@@ -7,9 +7,11 @@ import (
 	"os"
 
 	"github.com/agent-api/core/agent"
+	"github.com/agent-api/core/pkg/defaultagent"
 	"github.com/agent-api/core/tool"
 	"github.com/agent-api/gsv"
 	"github.com/agent-api/ollama-provider"
+	"github.com/agent-api/ollama-provider/models/qwen"
 
 	"github.com/go-logr/stdr"
 )
@@ -20,17 +22,22 @@ type calculatorSchema struct {
 	B         *gsv.IntSchema    `json:"b"`
 }
 
-type calculatorParams struct {
-	Operation string `json:"operation"`
-	A         int    `json:"a"`
-	B         int    `json:"b"`
-}
-
-func calculator(ctx context.Context, args *calculatorParams) (interface{}, error) {
+func calculator(ctx context.Context, args *calculatorSchema) (interface{}, error) {
 	// Simple example implementation
-	op := args.Operation
-	a := args.A
-	b := args.B
+	op, ok := args.Operation.Value()
+	if !ok {
+		return nil, fmt.Errorf("operation is not defined: %s", op)
+	}
+
+	a, ok := args.A.Value()
+	if !ok {
+		return nil, fmt.Errorf("a operand not defined: %s", op)
+	}
+
+	b, ok := args.B.Value()
+	if !ok {
+		return nil, fmt.Errorf("b operand not defined: %s", op)
+	}
 
 	switch op {
 	case "add":
@@ -43,21 +50,33 @@ func calculator(ctx context.Context, args *calculatorParams) (interface{}, error
 }
 
 func main() {
+	ctx := context.Background()
+
 	// Create a standard library logger
-	stdr.SetVerbosity(1) // Set the verbosity level
+	stdr.SetVerbosity(1)
 	log := stdr.NewWithOptions(log.New(os.Stderr, "", log.LstdFlags), stdr.Options{
-		LogCaller: stdr.All, // Optional: log the calling function/file/line
+		LogCaller: stdr.All,
 	})
 
 	// Create an Ollama provider
-	provider := ollama.NewOllamaProvider(log, "http://localhost", 11434, "qwen2.5")
+	ollamaProviderOpts := &ollama.ProviderOpts{
+		BaseURL: "http://localhost",
+		Port:    11434,
+		Logger:  log,
+	}
+	provider := ollama.NewProvider(ollamaProviderOpts)
+	provider.UseModel(ctx, qwen.QWEN2_5)
 
 	// Create a new agent
-	agent := agent.NewAgent(provider)
+	agentConf := &agent.AgentConfig{
+		Provider:     provider,
+		SystemPrompt: "You are a helpful assistant.",
+	}
+	agent := defaultagent.NewAgent(agentConf)
 
 	gsvSchema := &calculatorSchema{}
 	gsvSchema.A = gsv.Int().Description("the first operand")
-	gsvSchema.B = gsv.Int().Description("the first operand")
+	gsvSchema.B = gsv.Int().Description("the second operand")
 	gsvSchema.Operation = gsv.String().Description("The operation to perform. One of [add, multiply]")
 
 	compileOpts := &gsv.CompileSchemaOpts{
@@ -86,12 +105,11 @@ func main() {
 	}
 
 	// Send a message to the agent
-	ctx := context.Background()
-	response, err := agent.SendMessage(ctx, "What is 5 + 3?")
+	response, err := agent.Run(ctx, "What is 5 + 3?", defaultagent.DefaultStopCondition)
 	if err != nil {
 		log.Error(err, "failed sending message to agent")
 		return
 	}
 
-	fmt.Println("Agent response:", response.Content)
+	fmt.Println("Agent response:", response[len(response)-1].Message.Content)
 }

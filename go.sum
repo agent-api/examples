@@ -1,11 +1,5 @@
-github.com/agent-api/core v0.0.0-20250131162852-75a5911c0fd3 h1:yA45OBgrkmQXp95e5iijWgej1B5RH6OdzBLyFG+9Vb4=
-github.com/agent-api/core v0.0.0-20250131162852-75a5911c0fd3/go.mod h1:dubJb1P6cSuYOqQvBX/R9inWvHPMDuXCEwqwZfzXWTk=
 github.com/agent-api/gsv v0.0.0-20250131162740-e9893c861365 h1:o/Uk3B1pFCC3Fyx4fH8Z1uQzS1oJI4qNR7t4zE9byzM=
 github.com/agent-api/gsv v0.0.0-20250131162740-e9893c861365/go.mod h1:ASclOvFPcVygS0tFs5LqK8mj6zlE2qcx8Aijgp51yMA=
-github.com/agent-api/ollama-provider v0.0.0-20250131163043-2ed28dd93b7e h1:y3T+6FenqYKtNLeqTvdoaLddAQyA70NnxG2bq2cNqlU=
-github.com/agent-api/ollama-provider v0.0.0-20250131163043-2ed28dd93b7e/go.mod h1:eIDMVVzvmS0yFXqGaxrLF0n6c+/0JE+ysTofiE0e5WQ=
-github.com/agent-api/ollama-provider v0.0.0-20250131164639-820ce6bdc07d h1:3lAzBYrtQCsPHzz5TFJOdR+KDUiWtOs31ZnwTN8tu+k=
-github.com/agent-api/ollama-provider v0.0.0-20250131164639-820ce6bdc07d/go.mod h1:fBoby3TKYpddScfC94pkQ6laBwYszZ8nG6khtvHxGvc=
 github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
 github.com/go-logr/logr v1.4.2 h1:6pFjapn8bFcIbiKo3XT4j/BhANplGihG6tvd+8rYgrY=
 github.com/go-logr/logr v1.4.2/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
