@@ -3,16 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
 
-	"github.com/agent-api/core/agent"
-	"github.com/agent-api/core/pkg/defaultagent"
-	"github.com/agent-api/core/tool"
-	"github.com/agent-api/ollama-provider"
-	"github.com/agent-api/ollama-provider/models/qwen"
+	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
+	"go.uber.org/zap"
 
-	"github.com/go-logr/stdr"
+	"github.com/agent-api/core/pkg/agent"
+	"github.com/agent-api/core/types"
+	"github.com/agent-api/ollama"
+	"github.com/agent-api/ollama/models/qwen"
 )
 
 const jsonSchema string = `{
@@ -66,44 +65,51 @@ func calculator(ctx context.Context, args *calculatorParams) (interface{}, error
 func main() {
 	ctx := context.Background()
 
-	// Create a standard library logger
-	stdr.SetVerbosity(1)
-	log := stdr.NewWithOptions(log.New(os.Stderr, "", log.LstdFlags), stdr.Options{
-		LogCaller: stdr.All,
-	})
+	// Create a zap logger
+	var log logr.Logger
+	zapLog, err := zap.NewDevelopment()
+	if err != nil {
+		panic(fmt.Sprintf("who watches the watchmen (%v)?", err))
+	}
+
+	log = zapr.NewLogger(zapLog)
 
 	// Create an Ollama provider
-	ollamaProviderOpts := &ollama.ProviderOpts{
+	opts := &ollama.ProviderOpts{
 		BaseURL: "http://localhost",
 		Port:    11434,
 		Logger:  log,
 	}
-	provider := ollama.NewProvider(ollamaProviderOpts)
-	provider.UseModel(ctx, qwen.QWEN2_5)
+	provider := ollama.NewProvider(opts)
+	provider.UseModel(ctx, qwen.QWEN2_5_LATEST)
 
 	// Create a new agent
-	agentConf := &agent.AgentConfig{
+	agentConf := &agent.NewAgentConfig{
 		Provider:     provider,
 		SystemPrompt: "You are a helpful assistant.",
 	}
-	agent := defaultagent.NewAgent(agentConf)
+	myAgent := agent.NewAgent(agentConf)
 
 	// Register a simple calculator tool
-	wrappedCalc := tool.WrapFunction(calculator)
-	err := agent.AddTool(tool.Tool{
-		Name:            "calculator",
-		Description:     "Performs basic arithmetic operations: supported operations are 'add' and 'multiply'",
-		WrappedFunction: wrappedCalc,
-		JSONSchema:      []byte(jsonSchema),
-	})
+	wrappedCalc, err := types.WrapToolFunction(calculator)
+	if err != nil {
+		log.Error(err, "could not wrap calculator function")
+		return
+	}
 
+	err = myAgent.AddTool(types.Tool{
+		Name:                "calculator",
+		Description:         "Performs basic arithmetic operations: supported operations are 'add' and 'multiply'",
+		WrappedToolFunction: wrappedCalc,
+		JSONSchema:          []byte(jsonSchema),
+	})
 	if err != nil {
 		log.Error(err, "adding agent tool unsuccessful")
 		return
 	}
 
 	// Send a message to the agent
-	response, err := agent.Run(ctx, "What is 5 + 3?", defaultagent.DefaultStopCondition)
+	response, err := myAgent.Run(ctx, "What is 5 + 3?", agent.DefaultStopCondition)
 	if err != nil {
 		log.Error(err, "failed sending message to agent")
 		return
