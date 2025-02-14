@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
+	"time"
 
 	"github.com/agent-api/core/pkg/agent"
 	"github.com/agent-api/core/types"
 	"github.com/agent-api/gsv"
 	"github.com/agent-api/ollama"
 	"github.com/agent-api/ollama/models/qwen"
-
-	"github.com/go-logr/logr"
-	"github.com/go-logr/zapr"
-	"go.uber.org/zap"
+	"github.com/lmittmann/tint"
 )
 
 type calculatorSchema struct {
@@ -51,20 +51,19 @@ func calculator(ctx context.Context, args *calculatorSchema) (interface{}, error
 func main() {
 	ctx := context.Background()
 
-	// Create a zap logger
-	var log logr.Logger
-	zapLog, err := zap.NewDevelopment()
-	if err != nil {
-		panic(fmt.Sprintf("who watches the watchmen (%v)?", err))
-	}
-
-	log = zapr.NewLogger(zapLog)
+	// create a new std library logger
+	logger := slog.New(
+		tint.NewHandler(os.Stderr, &tint.Options{
+			Level:      slog.LevelDebug,
+			TimeFormat: time.Kitchen,
+		}),
+	)
 
 	// Create an Ollama provider
 	opts := &ollama.ProviderOpts{
 		BaseURL: "http://localhost",
 		Port:    11434,
-		Logger:  log,
+		Logger:  logger,
 	}
 	provider := ollama.NewProvider(opts)
 	provider.UseModel(ctx, qwen.QWEN2_5_LATEST)
@@ -72,6 +71,7 @@ func main() {
 	// Create a new agent
 	agentConf := &agent.NewAgentConfig{
 		Provider:     provider,
+		Logger:       logger,
 		SystemPrompt: "You are a helpful assistant.",
 	}
 	myAgent := agent.NewAgent(agentConf)
@@ -88,14 +88,14 @@ func main() {
 
 	schema, err := gsv.CompileSchema(gsvSchema, compileOpts)
 	if err != nil {
-		log.Error(err, "could not compile schema")
+		logger.Error(err.Error(), "could not compile schema", err)
 		return
 	}
 
 	// Register a simple calculator tool
 	wrappedCalc, err := types.WrapToolFunction(calculator)
 	if err != nil {
-		log.Error(err, "could not wrap calculator function")
+		logger.Error(err.Error(), "could not wrap calculator function", err)
 		return
 	}
 
@@ -106,14 +106,14 @@ func main() {
 		JSONSchema:          schema,
 	})
 	if err != nil {
-		log.Error(err, "adding agent tool unsuccessful")
+		logger.Error(err.Error(), "adding agent tool unsuccessful", err)
 		return
 	}
 
 	// Send a message to the agent
 	response, err := myAgent.Run(ctx, "What is 5 + 3?", agent.DefaultStopCondition)
 	if err != nil {
-		log.Error(err, "failed sending message to agent")
+		logger.Error(err.Error(), "failed sending message to agent", err)
 		return
 	}
 

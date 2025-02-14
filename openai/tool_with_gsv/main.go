@@ -7,51 +7,36 @@ import (
 	"os"
 	"time"
 
-	"github.com/lmittmann/tint"
-
 	"github.com/agent-api/core/pkg/agent"
 	"github.com/agent-api/core/types"
+	"github.com/agent-api/gsv"
 	"github.com/agent-api/ollama"
 	"github.com/agent-api/ollama/models/qwen"
+	"github.com/lmittmann/tint"
 )
 
-const jsonSchema string = `{
-  "title": "calculator",
-  "description": "A simple calculator on ints",
-  "type": "object",
-  "properties": {
-    "a": {
-      "description": "The first operand",
-      "type": "number"
-    },
-    "b": {
-      "description": "The first operand",
-      "type": "number"
-    },
-    "operation": {
-      "description": "The operation to perform. One of [add, multiply]",
-      "type": "string"
-    }
-  },
-  "required": [
-    "operation",
-    "a",
-    "b"
-  ]
-}`
-
-type calculatorParams struct {
-	Operation string `json:"operation"`
-	A         int    `json:"a"`
-	B         int    `json:"b"`
+type calculatorSchema struct {
+	Operation *gsv.StringSchema `json:"operation"`
+	A         *gsv.IntSchema    `json:"a"`
+	B         *gsv.IntSchema    `json:"b"`
 }
 
-// calculator is a simple tool that can be used by an LLM
-func calculator(ctx context.Context, args *calculatorParams) (interface{}, error) {
-	println("Tool call!")
-	op := args.Operation
-	a := args.A
-	b := args.B
+func calculator(ctx context.Context, args *calculatorSchema) (interface{}, error) {
+	// Simple example implementation
+	op, ok := args.Operation.Value()
+	if !ok {
+		return nil, fmt.Errorf("operation is not defined: %s", op)
+	}
+
+	a, ok := args.A.Value()
+	if !ok {
+		return nil, fmt.Errorf("a operand not defined: %s", op)
+	}
+
+	b, ok := args.B.Value()
+	if !ok {
+		return nil, fmt.Errorf("b operand not defined: %s", op)
+	}
 
 	switch op {
 	case "add":
@@ -84,12 +69,27 @@ func main() {
 	provider.UseModel(ctx, qwen.QWEN2_5_LATEST)
 
 	// Create a new agent
-	agentConf := &agent.NewAgentConfig{
+	myAgent := agent.NewAgent(&agent.NewAgentConfig{
 		Provider:     provider,
 		Logger:       logger,
 		SystemPrompt: "You are a helpful assistant.",
+	})
+
+	gsvSchema := &calculatorSchema{}
+	gsvSchema.A = gsv.Int().Description("the first operand")
+	gsvSchema.B = gsv.Int().Description("the second operand")
+	gsvSchema.Operation = gsv.String().Description("The operation to perform. One of [add, multiply]")
+
+	compileOpts := &gsv.CompileSchemaOpts{
+		SchemaTitle:       "Calculator",
+		SchemaDescription: "A simple calculator on ints",
 	}
-	myAgent := agent.NewAgent(agentConf)
+
+	schema, err := gsv.CompileSchema(gsvSchema, compileOpts)
+	if err != nil {
+		logger.Error(err.Error(), "could not compile schema", err)
+		return
+	}
 
 	// Register a simple calculator tool
 	wrappedCalc, err := types.WrapToolFunction(calculator)
@@ -102,7 +102,7 @@ func main() {
 		Name:                "calculator",
 		Description:         "Performs basic arithmetic operations: supported operations are 'add' and 'multiply'",
 		WrappedToolFunction: wrappedCalc,
-		JSONSchema:          []byte(jsonSchema),
+		JSONSchema:          schema,
 	})
 	if err != nil {
 		logger.Error(err.Error(), "adding agent tool unsuccessful", err)

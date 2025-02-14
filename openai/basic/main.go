@@ -8,9 +8,8 @@ import (
 	"time"
 
 	"github.com/agent-api/core/pkg/agent"
-	"github.com/agent-api/ollama"
-	"github.com/agent-api/ollama/models/qwen"
-
+	"github.com/agent-api/openai"
+	"github.com/agent-api/openai/models/gpt4o"
 	"github.com/lmittmann/tint"
 )
 
@@ -25,23 +24,18 @@ func main() {
 		}),
 	)
 
-	// Create an Ollama provider
-	opts := &ollama.ProviderOpts{
-		Logger:  logger,
-		BaseURL: "http://localhost",
-		Port:    11434,
-	}
-
-	provider := ollama.NewProvider(opts)
-	provider.UseModel(ctx, qwen.QWEN2_5_LATEST)
+	// Create an openai provider
+	provider := openai.NewProvider(&openai.ProviderOpts{
+		Logger: logger,
+	})
+	provider.UseModel(ctx, gpt4o.GPT4_O)
 
 	// Create a new agent
-	agentConf := &agent.NewAgentConfig{
+	myAgent := agent.NewAgent(&agent.NewAgentConfig{
 		Provider:     provider,
 		Logger:       logger,
 		SystemPrompt: "You are a helpful assistant.",
-	}
-	myAgent := agent.NewAgent(agentConf)
+	})
 
 	// Send a message to the agent
 	response, err := myAgent.Run(ctx, "Why is the sky blue?", agent.DefaultStopCondition)

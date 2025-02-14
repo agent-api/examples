@@ -11,8 +11,8 @@ import (
 
 	"github.com/agent-api/core/pkg/agent"
 	"github.com/agent-api/core/types"
-	"github.com/agent-api/ollama"
-	"github.com/agent-api/ollama/models/qwen"
+	"github.com/agent-api/openai"
+	"github.com/agent-api/openai/models/gpt4o"
 )
 
 const jsonSchema string = `{
@@ -75,21 +75,18 @@ func main() {
 	)
 
 	// Create an Ollama provider
-	opts := &ollama.ProviderOpts{
-		BaseURL: "http://localhost",
-		Port:    11434,
-		Logger:  logger,
+	opts := &openai.ProviderOpts{
+		Logger: logger,
 	}
-	provider := ollama.NewProvider(opts)
-	provider.UseModel(ctx, qwen.QWEN2_5_LATEST)
+	provider := openai.NewProvider(opts)
+	provider.UseModel(ctx, gpt4o.GPT4_O)
 
 	// Create a new agent
-	agentConf := &agent.NewAgentConfig{
+	myAgent := agent.NewAgent(&agent.NewAgentConfig{
 		Provider:     provider,
 		Logger:       logger,
-		SystemPrompt: "You are a helpful assistant.",
-	}
-	myAgent := agent.NewAgent(agentConf)
+		SystemPrompt: "You are a helpful assistant. YOU MUST ALWAYS USE AVAILABLE TOOLS.",
+	})
 
 	// Register a simple calculator tool
 	wrappedCalc, err := types.WrapToolFunction(calculator)
@@ -110,7 +107,7 @@ func main() {
 	}
 
 	// Send a message to the agent
-	response, err := myAgent.Run(ctx, "What is 5 + 3?", agent.DefaultStopCondition)
+	response, err := myAgent.Run(ctx, "What is 987 * 123?", agent.DefaultStopCondition)
 	if err != nil {
 		logger.Error(err.Error(), "failed sending message to agent", err)
 		return
