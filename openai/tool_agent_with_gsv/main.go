@@ -10,8 +10,8 @@ import (
 	"github.com/agent-api/core/pkg/agent"
 	"github.com/agent-api/core/types"
 	"github.com/agent-api/gsv"
-	"github.com/agent-api/ollama"
-	"github.com/agent-api/ollama/models/qwen"
+	"github.com/agent-api/openai"
+	"github.com/agent-api/openai/models"
 	"github.com/lmittmann/tint"
 )
 
@@ -59,14 +59,12 @@ func main() {
 		}),
 	)
 
-	// Create an Ollama provider
-	opts := &ollama.ProviderOpts{
-		BaseURL: "http://localhost",
-		Port:    11434,
-		Logger:  logger,
+	// Create an OpenAI provider
+	opts := &openai.ProviderOpts{
+		Logger: logger,
 	}
-	provider := ollama.NewProvider(opts)
-	provider.UseModel(ctx, qwen.QWEN2_5_LATEST)
+	provider := openai.NewProvider(opts)
+	provider.UseModel(ctx, models.GPT4_O)
 
 	// Create a new agent
 	myAgent := agent.NewAgent(&agent.NewAgentConfig{

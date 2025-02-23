@@ -9,7 +9,7 @@ import (
 
 	"github.com/agent-api/core/pkg/agent"
 	"github.com/agent-api/openai"
-	"github.com/agent-api/openai/models/gpt4o"
+	"github.com/agent-api/openai/models"
 	"github.com/lmittmann/tint"
 )
 
@@ -28,7 +28,7 @@ func main() {
 	provider := openai.NewProvider(&openai.ProviderOpts{
 		Logger: logger,
 	})
-	provider.UseModel(ctx, gpt4o.GPT4_O)
+	provider.UseModel(ctx, models.GPT4_O)
 
 	// Create a new agent
 	myAgent := agent.NewAgent(&agent.NewAgentConfig{

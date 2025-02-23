@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -10,9 +9,11 @@ import (
 	"github.com/agent-api/core/pkg/agent"
 	"github.com/agent-api/ollama"
 	"github.com/agent-api/ollama/models"
-
+	"github.com/agent-api/webscraper-agent"
 	"github.com/lmittmann/tint"
 )
+
+const PROMPT string = "Please scrape https://johncodes.com/archive/2025/01-11-whats-an-ai-agent/ and summarize it."
 
 func main() {
 	ctx := context.Background()
@@ -35,20 +36,15 @@ func main() {
 	provider := ollama.NewProvider(opts)
 	provider.UseModel(ctx, models.QWEN2_5_LATEST)
 
-	// Create a new agent
-	agentConf := &agent.NewAgentConfig{
-		Provider:     provider,
-		Logger:       logger,
-		SystemPrompt: "You are a helpful assistant.",
-	}
-	myAgent := agent.NewAgent(agentConf)
+	scraper, _ := webscraper.NewWebScraperAgent(&webscraper.WebScraperConfig{
+		Provider: provider,
+		Logger:   logger,
+	})
 
-	// Send a message to the agent
-	response, err := myAgent.Run(ctx, "Why is the sky blue?", agent.DefaultStopCondition)
+	result, err := scraper.Run(ctx, PROMPT, agent.DefaultStopCondition)
 	if err != nil {
-		logger.Error(err.Error(), "failed sending message to agent", err)
-		return
+		panic(err)
 	}
 
-	fmt.Println("Agent response:", response[1].Message.Content)
+	logger.Info(result[len(result)-1].Message.Content)
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/agent-api/core/types"
 	"github.com/agent-api/gsv"
 	"github.com/agent-api/ollama"
-	"github.com/agent-api/ollama/models/qwen"
+	"github.com/agent-api/ollama/models"
 	"github.com/lmittmann/tint"
 )
 
@@ -66,7 +66,7 @@ func main() {
 		Logger:  logger,
 	}
 	provider := ollama.NewProvider(opts)
-	provider.UseModel(ctx, qwen.QWEN2_5_LATEST)
+	provider.UseModel(ctx, models.QWEN2_5_LATEST)
 
 	// Create a new agent
 	agentConf := &agent.NewAgentConfig{

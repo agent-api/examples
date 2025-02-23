@@ -12,7 +12,7 @@ import (
 	"github.com/agent-api/core/pkg/agent"
 	"github.com/agent-api/core/types"
 	"github.com/agent-api/ollama"
-	"github.com/agent-api/ollama/models/qwen"
+	"github.com/agent-api/ollama/models"
 )
 
 const jsonSchema string = `{
@@ -81,7 +81,7 @@ func main() {
 		Logger:  logger,
 	}
 	provider := ollama.NewProvider(opts)
-	provider.UseModel(ctx, qwen.QWEN2_5_LATEST)
+	provider.UseModel(ctx, models.QWEN2_5_LATEST)
 
 	// Create a new agent
 	agentConf := &agent.NewAgentConfig{
