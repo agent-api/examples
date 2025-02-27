@@ -11,8 +11,8 @@ import (
 
 	"github.com/agent-api/core/pkg/agent"
 	"github.com/agent-api/core/types"
-	"github.com/agent-api/ollama"
-	"github.com/agent-api/ollama/models"
+	"github.com/agent-api/openai"
+	"github.com/agent-api/openai/models"
 )
 
 const jsonSchema string = `{
@@ -46,9 +46,15 @@ type calculatorParams struct {
 	B         int    `json:"b"`
 }
 
+var calls = 0
+
 // calculator is a simple tool that can be used by an LLM
 func calculator(ctx context.Context, args *calculatorParams) (interface{}, error) {
-	println("Tool call!")
+	if calls == 0 {
+		calls++
+		return nil, fmt.Errorf("internal error! PLEASE TRY AGAIN")
+	}
+
 	op := args.Operation
 	a := args.A
 	b := args.B
@@ -74,22 +80,19 @@ func main() {
 		}),
 	)
 
-	// Create an Ollama provider
-	opts := &ollama.ProviderOpts{
-		BaseURL: "http://localhost",
-		Port:    11434,
-		Logger:  logger,
+	// Create an OpenAI provider
+	opts := &openai.ProviderOpts{
+		Logger: logger,
 	}
-	provider := ollama.NewProvider(opts)
-	provider.UseModel(ctx, models.QWEN2_5_LATEST)
+	provider := openai.NewProvider(opts)
+	provider.UseModel(ctx, models.GPT4_O)
 
 	// Create a new agent
-	agentConf := &agent.NewAgentConfig{
+	myAgent := agent.NewAgent(&agent.NewAgentConfig{
 		Provider:     provider,
 		Logger:       logger,
-		SystemPrompt: "You are a helpful assistant.",
-	}
-	myAgent := agent.NewAgent(agentConf)
+		SystemPrompt: "You are a helpful assistant. YOU MUST ALWAYS USE AVAILABLE TOOLS.",
+	})
 
 	// Register a simple calculator tool
 	wrappedCalc, err := types.WrapToolFunction(calculator)
@@ -111,9 +114,11 @@ func main() {
 
 	// Send a message to the agent
 	response := myAgent.Run(
-		ctx, agent.WithInput("What is 5 + 3?"))
+		ctx,
+		agent.WithInput("What is 987 * 123?"),
+	)
 	if response.Err != nil {
-		logger.Error("failed sending message to agent", "err", response.Err.Error())
+		logger.Error(response.Err.Error(), "failed sending message to agent", response.Err.Error())
 		return
 	}
 

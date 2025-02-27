@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/agent-api/core/pkg/agent"
+	"github.com/agent-api/core/types"
 	"github.com/agent-api/ollama"
-	"github.com/agent-api/ollama/models"
 
 	"github.com/lmittmann/tint"
 )
@@ -33,23 +33,27 @@ func main() {
 	}
 
 	provider := ollama.NewProvider(opts)
-	provider.UseModel(ctx, models.QWEN2_5_LATEST)
+	model := &types.Model{
+		ID: "llama3.2-vision",
+	}
+	provider.UseModel(ctx, model)
 
 	// Create a new agent
 	agentConf := &agent.NewAgentConfig{
 		Provider:     provider,
 		Logger:       logger,
-		SystemPrompt: "You are a helpful assistant.",
+		SystemPrompt: "You are a professional image analyst.",
 	}
 	myAgent := agent.NewAgent(agentConf)
 
 	// Send a message to the agent
 	response := myAgent.Run(
 		ctx,
-		agent.WithInput("Why is the sky blue?"),
+		agent.WithInput("What is this image?"),
+		agent.WithImagePath("/Users/jpmcb/Desktop/agent-api-devlog-000-1.png"),
 	)
 	if response.Err != nil {
-		logger.Error("failed sending message to agent", "err", response.Err.Error())
+		logger.Error("failed sending message to agent", "error", response.Err.Error())
 		return
 	}
 

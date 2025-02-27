@@ -41,10 +41,13 @@ func main() {
 		Logger:   logger,
 	})
 
-	result, err := scraper.Run(ctx, PROMPT, agent.DefaultStopCondition)
-	if err != nil {
-		panic(err)
+	result := scraper.Run(
+		ctx,
+		agent.WithInput(PROMPT),
+	)
+	if result.Err != nil {
+		panic(result.Err)
 	}
 
-	logger.Info(result[len(result)-1].Message.Content)
+	logger.Info(result.Messages[len(result.Messages)-1].Content)
 }

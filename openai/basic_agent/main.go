@@ -38,11 +38,14 @@ func main() {
 	})
 
 	// Send a message to the agent
-	response, err := myAgent.Run(ctx, "Why is the sky blue?", agent.DefaultStopCondition)
-	if err != nil {
-		logger.Error(err.Error(), "failed sending message to agent", err)
+	response := myAgent.Run(
+		ctx,
+		agent.WithInput("Why is the sky blue?"),
+	)
+	if response.Err != nil {
+		logger.Error(response.Err.Error(), "failed sending message to agent", response.Err.Error())
 		return
 	}
 
-	fmt.Println("Agent response:", response[1].Message.Content)
+	fmt.Println("Agent response:", response.Messages[1].Content)
 }
