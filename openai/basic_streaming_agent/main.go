@@ -36,6 +36,12 @@ func main() {
 		SystemPrompt: "You are a helpful assistant.",
 	})
 
-	// Do the streaming
-	myAgent.RunStream(ctx, "Why is the sky blue?", agent.DefaultStopCondition)
+	result := myAgent.RunStream(
+		ctx,
+		agent.WithInput("Why is the sky blue?"),
+	)
+
+	for delta := range result.DeltaChan {
+		print(delta)
+	}
 }

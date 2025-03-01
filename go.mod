@@ -3,7 +3,7 @@ module github.com/agent-api/examples
 go 1.23.3
 
 require (
-	github.com/agent-api/core v0.0.0-20250227162826-246be7c4b3ff
+	github.com/agent-api/core v0.0.0-20250301050710-1ad74874d078
 	github.com/agent-api/gsv v0.0.0-20250131162740-e9893c861365
 	github.com/agent-api/ollama v0.0.0-20250227163112-f9059ce0e517
 )
@@ -17,16 +17,16 @@ require (
 	cloud.google.com/go/longrunning v0.6.4 // indirect
 	github.com/PuerkitoBio/goquery v1.10.2 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
-	github.com/anthropics/anthropic-sdk-go v0.2.0-alpha.11 // indirect
+	github.com/anthropics/anthropic-sdk-go v0.2.0-alpha.13 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/generative-ai-go v0.19.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.5 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
-	github.com/openai/openai-go v0.1.0-alpha.59 // indirect
+	github.com/openai/openai-go v0.1.0-alpha.61 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
@@ -45,8 +45,8 @@ require (
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
 	google.golang.org/api v0.223.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250224174004-546df14abb99 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250224174004-546df14abb99 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250227231956-55c901821b1e // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250227231956-55c901821b1e // indirect
 	google.golang.org/grpc v1.70.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 )
