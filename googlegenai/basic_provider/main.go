@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/agent-api/core/types"
-	"github.com/agent-api/gemini"
-	"github.com/agent-api/gemini/models"
+	"github.com/agent-api/googlegenai"
+	"github.com/agent-api/googlegenai/models"
 	"github.com/lmittmann/tint"
 )
 
@@ -23,8 +23,8 @@ func main() {
 		}),
 	)
 
-	// Create a gemini provider
-	provider := gemini.NewProvider(&gemini.ProviderOpts{
+	// Create a Google gen AI provider (Gemini)
+	provider := googlegenai.NewProvider(&googlegenai.ProviderOpts{
 		Logger: logger,
 	})
 	provider.UseModel(ctx, models.GEMINI_1_5_FLASH)

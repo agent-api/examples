@@ -23,7 +23,7 @@ func main() {
 		}),
 	)
 
-	// Create a gemini provider
+	// Create an Anthropic provider
 	provider := anthropic.NewProvider(&anthropic.ProviderOpts{
 		Logger: logger,
 	})

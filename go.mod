@@ -53,7 +53,7 @@ require (
 
 require (
 	github.com/agent-api/anthropic v0.0.0-20250226142405-c5f21953bb3f
-	github.com/agent-api/gemini v0.0.0-20250224150153-268dcbaf507e
+	github.com/agent-api/googlegenai v0.0.0-20250301051939-2482bbef34bc
 	github.com/agent-api/openai v0.0.0-20250227163240-2076619a8613
 	github.com/agent-api/webscraper-agent v0.0.0-20250219140416-1074e99cea61
 	github.com/lmittmann/tint v1.0.7
