@@ -8,7 +8,7 @@ import (
 
 	"github.com/agent-api/anthropic"
 	"github.com/agent-api/anthropic/models"
-	"github.com/agent-api/core/types"
+	"github.com/agent-api/core"
 	"github.com/lmittmann/tint"
 )
 
@@ -30,15 +30,15 @@ func main() {
 	provider.UseModel(ctx, models.CLAUDE_3_5_SONNET)
 
 	// Seed the message memory with the first user message
-	memory := []*types.Message{
+	memory := []*core.Message{
 		{
-			Role:    types.UserMessageRole,
+			Role:    core.UserMessageRole,
 			Content: "Why is the sky blue?",
 		},
 	}
-	genOpts := &types.GenerateOptions{
+	genOpts := &core.GenerateOptions{
 		Messages: memory,
-		Tools:    []*types.Tool{},
+		Tools:    []*core.Tool{},
 	}
 
 	logger.Debug("sending message with generate options", "genOpts", genOpts)

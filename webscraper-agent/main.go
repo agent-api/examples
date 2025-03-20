@@ -2,15 +2,15 @@ package main
 
 import (
 	"context"
-	"log/slog"
-	"os"
-	"time"
 
-	"github.com/agent-api/core/pkg/agent"
+	"github.com/agent-api/core/agent"
 	"github.com/agent-api/ollama"
 	"github.com/agent-api/ollama/models"
 	"github.com/agent-api/webscraper-agent"
-	"github.com/lmittmann/tint"
+
+	"github.com/go-logr/zapr"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const PROMPT string = "Please scrape https://johncodes.com/archive/2025/01-11-whats-an-ai-agent/ and summarize it."
@@ -18,17 +18,20 @@ const PROMPT string = "Please scrape https://johncodes.com/archive/2025/01-11-wh
 func main() {
 	ctx := context.Background()
 
-	// create a new std library logger
-	logger := slog.New(
-		tint.NewHandler(os.Stderr, &tint.Options{
-			Level:      slog.LevelDebug,
-			TimeFormat: time.Kitchen,
-		}),
-	)
+	// Create a zap logger
+	config := zap.NewDevelopmentConfig()
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	zLogger, err := config.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	// Create a logr.Logger using zapr adapter
+	logger := zapr.NewLogger(zLogger)
 
 	// Create an Ollama provider
 	opts := &ollama.ProviderOpts{
-		Logger:  logger,
+		Logger:  &logger,
 		BaseURL: "http://localhost",
 		Port:    11434,
 	}
@@ -38,15 +41,16 @@ func main() {
 
 	scraper, _ := webscraper.NewWebScraperAgent(&webscraper.WebScraperConfig{
 		Provider: provider,
-		Logger:   logger,
+		Logger:   &logger,
+		MaxSteps: 15,
 	})
 
-	result := scraper.Run(
+	result, err := scraper.Run(
 		ctx,
 		agent.WithInput(PROMPT),
 	)
-	if result.Err != nil {
-		panic(result.Err)
+	if err != nil {
+		panic(err)
 	}
 
 	logger.Info(result.Messages[len(result.Messages)-1].Content)

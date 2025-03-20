@@ -2,46 +2,51 @@ package main
 
 import (
 	"context"
-	"log/slog"
-	"os"
+	"fmt"
 	"time"
 
-	"github.com/agent-api/core/types"
+	"github.com/go-logr/zapr"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	"github.com/agent-api/core"
 	"github.com/agent-api/openai"
 	"github.com/agent-api/openai/models"
-	"github.com/lmittmann/tint"
 )
 
 func main() {
 	ctx := context.Background()
 
-	// create a new std library logger
-	logger := slog.New(
-		tint.NewHandler(os.Stderr, &tint.Options{
-			Level:      slog.LevelDebug,
-			TimeFormat: time.Kitchen,
-		}),
-	)
+	// Create a zap logger
+	config := zap.NewDevelopmentConfig()
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	zLogger, err := config.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	// Create a logr.Logger using zapr adapter
+	logger := zapr.NewLogger(zLogger)
 
 	// Create an openai provider
 	provider := openai.NewProvider(&openai.ProviderOpts{
-		Logger: logger,
+		Logger: &logger,
 	})
 	provider.UseModel(ctx, models.GPT4_O)
 
 	// Seed the message memory with the first user message
-	memory := []*types.Message{
+	memory := []*core.Message{
 		{
-			Role:    types.UserMessageRole,
+			Role:    core.UserMessageRole,
 			Content: "Why is the sky blue?",
 		},
 	}
-	genOpts := &types.GenerateOptions{
+	genOpts := &core.GenerateOptions{
 		Messages: memory,
-		Tools:    []*types.Tool{},
+		Tools:    []*core.Tool{},
 	}
 
-	logger.Debug("sending message with generate options", "genOpts", genOpts)
+	logger.V(1).Info("sending message with generate options", "genOpts", genOpts)
 	msgChan, deltaChan, errChan := provider.GenerateStream(ctx, genOpts)
 
 	// Handle streamed messages and errors
@@ -79,7 +84,7 @@ func main() {
 			}
 
 		case <-time.After(30 * time.Second):
-			logger.Error("stream timeout")
+			logger.V(0).Error(fmt.Errorf("stream timeout"), "timeout")
 			panic("stream timeout")
 		}
 	}

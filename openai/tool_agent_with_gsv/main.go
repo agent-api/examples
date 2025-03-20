@@ -3,16 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
-	"time"
 
-	"github.com/agent-api/core/pkg/agent"
-	"github.com/agent-api/core/types"
+	"github.com/go-logr/zapr"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	"github.com/agent-api/core"
+	"github.com/agent-api/core/agent"
+	"github.com/agent-api/core/agent/bootstrap"
 	"github.com/agent-api/gsv"
 	"github.com/agent-api/openai"
 	"github.com/agent-api/openai/models"
-	"github.com/lmittmann/tint"
 )
 
 type calculatorSchema struct {
@@ -21,7 +22,7 @@ type calculatorSchema struct {
 	B         *gsv.IntSchema    `json:"b"`
 }
 
-func calculator(ctx context.Context, args *calculatorSchema) (interface{}, error) {
+func calculator(ctx context.Context, args *calculatorSchema) (any, error) {
 	// Simple example implementation
 	op, ok := args.Operation.Value()
 	if !ok {
@@ -51,27 +52,32 @@ func calculator(ctx context.Context, args *calculatorSchema) (interface{}, error
 func main() {
 	ctx := context.Background()
 
-	// create a new std library logger
-	logger := slog.New(
-		tint.NewHandler(os.Stderr, &tint.Options{
-			Level:      slog.LevelDebug,
-			TimeFormat: time.Kitchen,
-		}),
-	)
+	// Create a zap logger
+	config := zap.NewDevelopmentConfig()
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	zLogger, err := config.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	// Create a logr.Logger using zapr adapter
+	logger := zapr.NewLogger(zLogger)
 
 	// Create an OpenAI provider
 	opts := &openai.ProviderOpts{
-		Logger: logger,
+		Logger: &logger,
 	}
 	provider := openai.NewProvider(opts)
 	provider.UseModel(ctx, models.GPT4_O)
 
 	// Create a new agent
-	myAgent := agent.NewAgent(&agent.NewAgentConfig{
-		Provider:     provider,
-		Logger:       logger,
-		SystemPrompt: "You are a helpful assistant.",
-	})
+	myAgent, err := agent.NewAgent(
+		bootstrap.WithProvider(provider),
+		bootstrap.WithLogger(&logger),
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	gsvSchema := &calculatorSchema{}
 	gsvSchema.A = gsv.Int().Description("the first operand")
@@ -85,35 +91,35 @@ func main() {
 
 	schema, err := gsv.CompileSchema(gsvSchema, compileOpts)
 	if err != nil {
-		logger.Error(err.Error(), "could not compile schema", err)
+		logger.Error(err, "could not compile schema", err)
 		return
 	}
 
 	// Register a simple calculator tool
-	wrappedCalc, err := types.WrapToolFunction(calculator)
+	wrappedCalc, err := core.WrapToolFunction(calculator)
 	if err != nil {
-		logger.Error(err.Error(), "could not wrap calculator function", err)
+		logger.Error(err, "could not wrap calculator function", err)
 		return
 	}
 
-	err = myAgent.AddTool(types.Tool{
+	err = myAgent.AddTool(&core.Tool{
 		Name:                "calculator",
 		Description:         "Performs basic arithmetic operations: supported operations are 'add' and 'multiply'",
 		WrappedToolFunction: wrappedCalc,
 		JSONSchema:          schema,
 	})
 	if err != nil {
-		logger.Error(err.Error(), "adding agent tool unsuccessful", err)
+		logger.Error(err, "adding agent tool unsuccessful", err)
 		return
 	}
 
 	// Send a message to the agent
-	response := myAgent.Run(
+	response, err := myAgent.Run(
 		ctx,
 		agent.WithInput("What is 987 * 123?"),
 	)
-	if response.Err != nil {
-		logger.Error(response.Err.Error(), "failed sending message to agent", response.Err.Error())
+	if err != nil {
+		logger.Error(err, "failed sending message to agent", err)
 		return
 	}
 

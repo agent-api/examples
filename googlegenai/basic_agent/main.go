@@ -3,14 +3,13 @@ package main
 import (
 	"context"
 
+	"github.com/agent-api/core/agent"
+	"github.com/agent-api/core/agent/bootstrap"
+	"github.com/agent-api/googlegenai"
+	"github.com/agent-api/googlegenai/models"
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
-	"github.com/agent-api/core/agent"
-	"github.com/agent-api/core/agent/bootstrap"
-	"github.com/agent-api/openai"
-	"github.com/agent-api/openai/models"
 )
 
 func main() {
@@ -27,11 +26,11 @@ func main() {
 	// Create a logr.Logger using zapr adapter
 	logger := zapr.NewLogger(zLogger)
 
-	// Create an openai provider
-	provider := openai.NewProvider(&openai.ProviderOpts{
+	// Create a Google Gen AI provider
+	provider := googlegenai.NewProvider(&googlegenai.ProviderOpts{
 		Logger: &logger,
 	})
-	provider.UseModel(ctx, models.GPT4_O)
+	provider.UseModel(ctx, models.GEMINI_1_5_FLASH)
 
 	// Create a new agent
 	myAgent, err := agent.NewAgent(
@@ -42,12 +41,8 @@ func main() {
 		panic(err)
 	}
 
-	result := myAgent.RunStream(
+	myAgent.Run(
 		ctx,
 		agent.WithInput("Why is the sky blue?"),
 	)
-
-	for delta := range result.DeltaChan {
-		print(delta)
-	}
 }
